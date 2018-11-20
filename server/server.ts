@@ -11,8 +11,9 @@ const sanitize = require('express-mongo-sanitize');
 const passport = require('passport');
 
 const resS = require('./routes/sendFormat');
-const user = require('./routes/users');
+const users = require('./routes/users');
 const attendance = require('./routes/attendance');
+const modules = require('./routes/modules');
 
 require('dotenv').load();
 require('./routes/passport');
@@ -43,8 +44,9 @@ mongoose.set('useNewUrlParser', true);
     });
 })();
 
-app.use('/user', user);
+app.use('/user', users);
 app.use('/attendance', attendance);
+app.use('/module', modules);
 
 app.use((req: Request, res: Response) => {
     resS.sendError(res, 404, "No Matching Route Found !");
