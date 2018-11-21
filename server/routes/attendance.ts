@@ -10,38 +10,61 @@ const dateFormat = require('../utility/date_format');
 
 const passportJwt = passport.authenticate('jwt', { session: false });
 
+Router.route('/fetchdate')
+    .get(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
+        const body = req.body;
+        const today = new Date(dateFormat.now().full);
+        const sDate = body.sDate ? new Date(body.sDate) : dateFormat.custom(new Date(Date.parse(today.toISOString()) - (7 * 60 * 60 * 1000))).full;
+        const eDate = body.eDate ? new Date(body.eDate) : new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+        resS.send(res, "Dates:", { today, t: today.getDate(), sDate, eDate });
+    });
+
 Router.route('/check-in')
     .post(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
-        const today = new Date();
-
-        const monthObj = await Attendance.findOne({ loginid: req['user']['loginid'], month: today.getMonth() + 1, year: today.getFullYear() }, { _id: 0, loginid: 1 });
-
         const body = req.body;
+        const today = new Date(dateFormat.now().full);
 
-        if (!monthObj) {
-            const final = await Attendance.create({ loginid: req['user']['loginid'], month_attendance: [body] });
-            resS.send(res, "Inserted !", final);
+        const markedToday = await Attendance.findOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate() }, { _id: 0, loginid: 1 });
+
+        if (markedToday) {
+            return resS.sendError(res, 501, "Check-in Already Marked !");
         }
         else {
-            const updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: today.getMonth() + 1, year: today.getFullYear() }, { $addToSet: { 'month_attendance': body } });
+            body.updated_by = req['user']['loginid'];
+            body.time = dateFormat.now().time;
+            body.latitude = body.latitude || 0.0;
+            body.longitude = body.longitude || 0.0;
+
+            const updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear() }, { $push: { 'month_attendance': { $each: [{ date: body.date || today.getDate(), check_in: body }], $sort: { date: 1 } } } }, { upsert: true });
+
+            resS.send(res, "Updated !", updatedAttendance);
+        }
+    });
+
+Router.route('/check-out')
+    .post(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
+        const body = req.body;
+        const today = new Date(dateFormat.now().full);
+
+        const markedToday = await Attendance.findOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate(), 'month_attendance.check_out': { $exists: false } }, { _id: 0, loginid: 1 });
+        console.log(markedToday);
+        if (markedToday) {
+            return resS.sendError(res, 501, "Check-out Already Marked !");
+        }
+        else {
+            body.updated_by = req['user']['loginid'];
+            body.time = dateFormat.now().time;
+            body.latitude = body.latitude || 0.0;
+            body.longitude = body.longitude || 0.0;
+
+            var updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate() }, { $set: { 'month_attendance.$.check_out': body } });
 
             if (updatedAttendance.nModified)
                 resS.send(res, "Updated !", updatedAttendance);
             else
                 resS.sendError(res, 501, "Not Updated !", updatedAttendance);
         }
-    });
-
-Router.route('/check-out')
-    .post(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
-        const today = new Date();
-
-        var updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: today.getMonth() + 1, year: today.getFullYear(), 'month_attendance.date': today.getDate() }, { 'month_attendance.$.check_out': dateFormat.now() });
-
-        if (updatedAttendance.nModified)
-            resS.send(res, "Updated !", updatedAttendance);
-        else
-            resS.sendError(res, 501, "Not Updated !", updatedAttendance);
     });
 
 module.exports = Router;
