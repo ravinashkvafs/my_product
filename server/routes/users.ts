@@ -6,6 +6,7 @@ const passport = require('passport');
 const User = require('../models/users');
 const resS = require('./sendFormat');
 const Verify = require('./verify');
+const dateFormat = require('../utility/date_format');
 
 const passportLocal = passport.authenticate('local', { session: false });
 const passportJwt = passport.authenticate('jwt', { session: false });
@@ -51,8 +52,11 @@ Router.route('/auth/register')
         if (existingUser)
             resS.sendError(res, 409, "User Already Exists !", {});
         else {
+            req.body.doj ? req.body.doj = dateFormat.custom(req.body.doj) : null;
+
             // const Schema = require('mongoose').Schema;
             const userD = new User(req.body);
+            console.log();
             // userD._id = new Schema.Types.ObjectId;
 
             const savedUser = await userD.save();

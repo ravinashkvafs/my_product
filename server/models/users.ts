@@ -22,6 +22,7 @@ const UserSchema = new mongoose.Schema({
     project_code: { type: String, required: true, lowercase: true, trim: true },
     isActive: { type: Boolean, default: true },
     isExit: { type: Boolean, default: false },
+    counters: [Number],
     doj: { type: Object, default: dateFormat.now() },
     doe: Object
 });

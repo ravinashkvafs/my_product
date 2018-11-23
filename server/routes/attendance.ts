@@ -31,12 +31,20 @@ Router.route('/check-in')
             return resS.sendError(res, 501, "Check-in Already Marked !");
         }
         else {
+            //check-in data
             body.updated_by = req['user']['loginid'];
             body.time = dateFormat.now().time;
             body.latitude = body.latitude || 0.0;
             body.longitude = body.longitude || 0.0;
+            if (!('source' in body) || ['web', 'app', 'ios'].indexOf(body.source) == -1)
+                return resS.sendError(res, 501, "Kindly Enter Valid Source !");
 
-            const updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear() }, { $push: { 'month_attendance': { $each: [{ date: body.date || today.getDate(), check_in: body }], $sort: { date: 1 } } } }, { upsert: true });
+            const toPush = { date: body.date || today.getDate(), check_in: body };
+            body.reason ? toPush['reason'] = body.reason : null;
+
+            const toSet = { last_updated: today };
+
+            const updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear() }, { $push: { 'month_attendance': { $each: [toPush], $sort: { date: 1 } } }, $set: toSet }, { upsert: true });
 
             resS.send(res, "Updated !", updatedAttendance);
         }
@@ -47,7 +55,7 @@ Router.route('/check-out')
         const body = req.body;
         const today = new Date(dateFormat.now().full);
 
-        const markedToday = await Attendance.findOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate(), 'month_attendance.check_out': { $exists: false } }, { _id: 0, loginid: 1 });
+        const markedToday = await Attendance.findOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), month_attendance: { $elemMatch: { date: body.date || today.getDate(), check_out: { $exists: true } } } }, { _id: 0, loginid: 1, 'month_attendance.$.check_out': 1 });
         console.log(markedToday);
         if (markedToday) {
             return resS.sendError(res, 501, "Check-out Already Marked !");
@@ -57,8 +65,10 @@ Router.route('/check-out')
             body.time = dateFormat.now().time;
             body.latitude = body.latitude || 0.0;
             body.longitude = body.longitude || 0.0;
+            if (!('source' in body) || ['web', 'app', 'ios'].indexOf(body.source) == -1)
+                return resS.sendError(res, 501, "Kindly Enter Valid Source !");
 
-            var updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate() }, { $set: { 'month_attendance.$.check_out': body } });
+            var updatedAttendance = await Attendance.updateOne({ loginid: req['user']['loginid'], month: body.month || today.getMonth() + 1, year: body.year || today.getFullYear(), 'month_attendance.date': body.date || today.getDate() }, { $set: { last_updated: today, 'month_attendance.$.check_out': body } });
 
             if (updatedAttendance.nModified)
                 resS.send(res, "Updated !", updatedAttendance);
