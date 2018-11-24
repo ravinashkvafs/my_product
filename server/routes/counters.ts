@@ -1,3 +1,5 @@
+'use strict';
+
 import { Request, Response, NextFunction } from 'express';
 
 const Router = require('express-promise-router')();
@@ -10,7 +12,7 @@ const dateFormat = require('../utility/date_format');
 
 const passportJwt = passport.authenticate('jwt', { session: false });
 
-Router.route('/pushCounter')
+Router.route('/push')
     .post(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
         const body = req.body;
         const today = new Date(dateFormat.now().full);

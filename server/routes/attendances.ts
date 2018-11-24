@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 const Router = require('express-promise-router')();
 const passport = require('passport');
 
-const Attendance = require('../models/attendance');
+const Attendance = require('../models/attendances');
 const resS = require('./sendFormat');
 const Verify = require('./verify');
 const dateFormat = require('../utility/date_format');
