@@ -12,7 +12,9 @@ const CounterSchema = new Schema({
     city: { type: String, trim: true },
     pincode: Number,
     address: { type: String, trim: true },
-    active: { type: Boolean, default: true },
+    region: { type: String, trim: true },
+    project_code: { type: String, required: true, trim: true, lowercase: true },
+    isActive: { type: Boolean, default: true },
     inserted_at: { type: Object, default: dateFormat.now() },
     updated_by: { type: String, trim: true }
 });

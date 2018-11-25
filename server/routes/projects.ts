@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const Router = require('express-promise-router')();
 const passport = require('passport');
+const fs = require('fs');
 
 const Project = require('../models/projects');
 const resS = require('./sendFormat');
@@ -31,6 +32,9 @@ Router.route('/')
         if (existingStore)
             return resS.sendError(res, 501, "Project Already Exists !", existingStore);
         else {
+            if (!fs.existsSync(('./uploads/' + project_code)))
+                fs.mkdirSync('./uploads/' + project_code);
+
             const result = await Project.update({ client_code }, { $push: { projects: { project_code, project_name } } }, { upsert: true });
             return resS.send(res, "Project Successfully Added !", result);
         }

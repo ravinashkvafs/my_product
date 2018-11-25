@@ -4,6 +4,7 @@ const Router = require('express-promise-router')();
 const passport = require('passport');
 
 const User = require('../models/users');
+const Counter = require('../models/counters');
 const resS = require('./sendFormat');
 const Verify = require('./verify');
 const dateFormat = require('../utility/date_format');
@@ -30,6 +31,15 @@ Router.route('/changePassword')
         foundUser.password = req.body.newPassword;
         const savedUser = await foundUser.save();
         resS.send(res, "Password Changed Successfully !", savedUser);
+    });
+
+Router.route('/loadCounters')
+    .get(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
+        const userCounters = User.findOne({ _id: req['user']['_id'] }, { _id: 0, counters: 1 });
+
+        const result = await Counter.find({ sap_code: { $in: userCounters.counters } });
+
+        return resS.send(res, "Counters Loaded Successfully !", result);
     });
 
 Router.route('/auth/login')
