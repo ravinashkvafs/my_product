@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const Router = require('express-promise-router')();
 const passport = require('passport');
+const _ = require('lodash');
 
 const User = require('../models/users');
 const Counter = require('../models/counters');
@@ -35,11 +36,34 @@ Router.route('/changePassword')
 
 Router.route('/loadCounters')
     .get(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
-        const userCounters = User.findOne({ _id: req['user']['_id'] }, { _id: 0, counters: 1 });
+        const result = await User.aggregate([
+            { $match: { 'loginid': req['user']['loginid'] } },
+            { $project: { _id: 0, counters: 1 } },
+            {
+                $lookup: {
+                    from: 'counters',
+                    localField: 'counters',
+                    foreignField: 'sap_code',
+                    as: 'counters'
+                }
+            },
+            { $project: { _id: 0, 'counters.counter_name': 1, 'counters.state': 1, 'counters.city': 1, 'counters.pincode': 1, 'counters.address': 1, 'counters.region': 1 } }
+        ]);
 
-        const result = await Counter.find({ sap_code: { $in: userCounters.counters } });
+        // const userCounters = await User.findOne({ _id: req['user']['_id'] }, { _id: 0, counters: 1 });
+
+        // const result = await Counter.find({ sap_code: { $in: userCounters.counters } }, { _id: 0, 'counter_name': 1, 'state': 1, 'city': 1, 'pincode': 1, 'address': 1, 'region': 1 });
 
         return resS.send(res, "Counters Loaded Successfully !", result);
+    });
+
+Router.route('/mapCounters')
+    .put(passportJwt, Verify.verifyClient, async (req: Request, res: Response, next: NextFunction) => {
+        const { counters } = req.body;
+
+        const userCounters = await User.updateOne({ _id: req['user']['_id'] }, { $addToSet: { counters: { $each: counters } } });
+
+        return resS.send(res, "Counters Added Successfully !", userCounters);
     });
 
 Router.route('/auth/login')

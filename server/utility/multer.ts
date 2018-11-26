@@ -5,6 +5,8 @@ const fs = require('fs');
 
 const diskStorage = multer.diskStorage({
     destination: (req, file, cb) => {
+        if (!fs.existsSync('uploads'))
+            fs.mkdirSync('uploads');
         if (!fs.existsSync('uploads/' + req['user']['project_code']))
             fs.mkdirSync('uploads/' + req['user']['project_code']);
         if (!fs.existsSync('uploads/' + req['user']['project_code'] + '/' + file.fieldname))
