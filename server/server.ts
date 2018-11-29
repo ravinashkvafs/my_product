@@ -45,12 +45,14 @@ const attendances = require('./routes/attendances');
 const modules = require('./routes/modules');
 const counters = require('./routes/counters');
 const projects = require('./routes/projects');
+const formats = require('./routes/download_format');
 
 app.use('/user', users);
 app.use('/attendance', attendances);
 app.use('/module', modules);
 app.use('/counter', counters);
 app.use('/project', projects);
+app.use('/download_format', formats);
 
 app.use((req: Request, res: Response) => {
     resS.sendError(res, 404, "No Matching Route Found !");
