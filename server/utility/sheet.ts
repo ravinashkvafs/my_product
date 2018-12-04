@@ -4,6 +4,7 @@ const xlsx = require('xlsx');
 const path = require('path');
 
 const Useless = require('../models/useless_files');
+const RemoveFilesFolders = require('./removeOldFiles');
 
 module.exports = {
     getJsonFromSheet: (filePath, sheetName) => {
@@ -56,12 +57,16 @@ module.exports = {
         });
 
         const finalFileName = `${Date.now()}_${fileName}.xlsx`;
-        const finalPath = path.join(__dirname, `../uploads/${project_code}/download_format/`, finalFileName);
+        const finalPath = `${process.env.FOLDER_PATH}/uploads/${project_code}/download_format/${finalFileName}`;
         // console.log(JSON.stringify(workbook));
+
+        //removing old files/folders
+        RemoveFilesFolders(project_code, 'download_format', finalFileName);
+
         xlsx.writeFile(workbook, finalPath, { bookType: 'xlsx', type: 'buffer' });
 
         Useless.create({ project_code, type: fileName, path: finalPath });
 
-        return finalPath;
+        return { finalPath, finalFileName };
     }
 };

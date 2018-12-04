@@ -37,9 +37,9 @@ Router.route('/:type')
         if (!formatObj)
             return resS.sendError(res, 404, "Format Not Found !");
 
-        const finalPath = sheetOperation.getSheetPathFromJson(req['user']['project_code'], formatObj.format, type, 'Sheet1');
+        const { finalPath, finalFileName } = sheetOperation.getSheetPathFromJson(req['user']['project_code'], formatObj.format, type, 'Sheet1');
 
-        resS.sendFile(res, finalPath);
+        resS.download(res, finalPath, finalFileName);
     });
 
 module.exports = Router;
