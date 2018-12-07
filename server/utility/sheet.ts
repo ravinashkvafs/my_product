@@ -32,13 +32,14 @@ module.exports = {
         if (!fs.existsSync(`uploads/${project_code}/download_format`))
             fs.mkdirSync(`uploads/${project_code}/download_format`);
 
-        /* make the worksheet */
+        //making worksheet from json
         const ws = xlsx.utils.json_to_sheet(headerData);
 
         /* add to workbook */
         // const workbook = xlsx.utils.book_new();
         // xlsx.utils.book_append_sheet(workbook, ws, sheetName);
 
+        //making workbook
         const workbook = {
             Sheets: {},
             SheetNames: [sheetName]
@@ -51,8 +52,9 @@ module.exports = {
 
         headerData.forEach((column, keyI) => {
             workbook['Sheets'][sheetName][String.fromCharCode(65 + keyI) + 1] = { t: 's', v: column.field };
+            workbook['Sheets'][sheetName][String.fromCharCode(65 + keyI) + 2] = { t: 'n', v: 123 };
             // for (let i = 2; i <= 1000; i++) {
-            //     workbook['Sheets'][sheetName][String.fromCharCode(65 + keyI) + i] = { t: 'b', v: true };
+            //     workbook['Sheets'][sheetName][String.fromCharCode(65 + keyI) + i] = { t: 's', v: 'true' };
             // }
         });
 

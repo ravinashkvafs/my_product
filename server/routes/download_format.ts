@@ -29,17 +29,19 @@ Router.route('/')
     });
 
 Router.route('/:type')
-    .get(passportJwt, async (req: Request, res: Response, next: NextFunction) => {
-        const { type } = req.params;
+    .get(
+        // passportJwt,
+        async (req: Request, res: Response, next: NextFunction) => {
+            const { type } = req.params;
 
-        const formatObj = await Format.findOne({ project_code: req['user']['project_code'], type }, { _id: 0, format: 1 });
+            const formatObj = await Format.findOne({ project_code: 'testproj' || req['user']['project_code'], type }, { _id: 0, format: 1 });
 
-        if (!formatObj)
-            return resS.sendError(res, 404, "Format Not Found !");
+            if (!formatObj)
+                return resS.sendError(res, 404, "Format Not Found !");
 
-        const { finalPath, finalFileName } = sheetOperation.getSheetPathFromJson(req['user']['project_code'], formatObj.format, type, 'Sheet1');
+            const { finalPath, finalFileName } = sheetOperation.getSheetPathFromJson('testproj' || req['user']['project_code'], formatObj.format, type, 'Sheet1');
 
-        resS.download(res, finalPath, finalFileName);
-    });
+            resS.download(res, finalPath, finalFileName);
+        });
 
 module.exports = Router;
